@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from "../assets/images/blockguard-logo.png";
-import { generateWallet } from '../utils/walletUtils'; 
+ 
 
 const SignUp = () => {
   const [isChecked, setIsChecked] = useState(false);
@@ -24,7 +24,14 @@ const SignUp = () => {
   }
 };
 
-
+// const handleSubmit = async (e) => {
+//   e.preventDefault();
+//   try{
+//     const result = await ('https://block-guard-wallet.onrender.com/wallets/create-new-wallet', {
+//       p
+//     })
+//   }
+// }
 
   const handleImportWallet = () => {
     if (isChecked) {

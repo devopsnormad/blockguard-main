@@ -1,85 +1,151 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { IoIosArrowDown } from "react-icons/io";
 import { FaRegCircleDot } from "react-icons/fa6";
 import { BsSendFill } from "react-icons/bs";
 import { MdCallReceived } from "react-icons/md";
 import { FaEthereum } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { getBalance, hexToDecimal } from "../../utils/walletUtils";
+import axios from "axios";
+import { ethers } from "ethers";
 
-// Define token color mapping
-const tokenColors = {
-  Ethereum: "#627EEA", // Blue for Ethereum
-  Bitcoin: "#F7931A",  // Gold for Bitcoin
-  USDT: "#26A17B",     // Green for USDT
-  BNB: "#F0B90B",      // Yellow for BNB
+const networkColors = {
+  Ethereum: "#627EEA", 
+  Sepolia: "#F7931A",  
 };
 
+// Home Component
 const Home = () => {
   const navigate = useNavigate();
-  
-  // State to manage the dropdown, selected token, and token list
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedToken, setSelectedToken] = useState({ name: "Ethereum", color: tokenColors["Ethereum"] });
-  const [tokens, setTokens] = useState([]);
+  const [selectedNetwork, setSelectedNetwork] = useState({ name: "Ethereum", color: networkColors["Ethereum"] });
+  const [networks, setNetworks] = useState([]);
+  const [balance, setBalance] = useState(0);
+  const [ethPrice, setEthPrice] = useState(0);
 
-  // Fetch tokens (this is simulated, in a real app you'd fetch from an API)
   useEffect(() => {
-    const fetchTokens = async () => {
-      const fetchedTokens = [
+    const fetchNetwork = async () => {
+      const fetchedNetwork = [
         { name: "Ethereum" },
-        { name: "Bitcoin" },
-        { name: "USDT" },
-        { name: "BNB" },
+        { name: "Sepolia" },
       ];
-      // Assign colors dynamically
-      const tokensWithColors = fetchedTokens.map(token => ({
-        ...token,
-        color: tokenColors[token.name] || "#FFF", // Fallback color if not defined
+
+      const networksWithColors = fetchedNetwork.map(network => ({
+        ...network,
+        color: networkColors[network.name] || "#000",
       }));
-      setTokens(tokensWithColors);
+      setNetworks(networksWithColors);
     };
 
-    fetchTokens();
+    fetchNetwork();
   }, []);
+
+ // Fetch ETH price in USD from CoinGecko
+ const fetchEthPrice = async () => {
+  try {
+    const response = await axios.get("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd");
+    const price = response.data.ethereum.usd;
+    setEthPrice(price);
+  }catch (error){
+    console.error(error)
+  }
+ };
+
+ useEffect (()=>{
+  fetchEthPrice();
+ },[])
+
+  // Fetch the balance based on the selected network
+  // useEffect(() => {
+  //   const fetchBalance = async () => {
+  //     try {
+  //       const currentAccount = JSON.parse(localStorage.getItem("userAccounts"))[0];
+        
+  //       const network = selectedNetwork.name.toLowerCase();
+  //       const address = currentAccount.publicAddress;
+  //       console.log(network)
+  //       const balanceHex = await getBalance(network, address);
+  //       console.log(`BH: ${balanceHex/1e18}`)
+  //       const etherBalance = hexToDecimal(balanceHex) / 1e18;
+  //       console.log(`EB: ${etherBalance}`)
+  //       setBalance(etherBalance);
+  //     } catch (error) {
+  //       console.error(error);
+  //     }
+  //   };
+  //   fetchBalance();
+  // }, [selectedNetwork]);
+
+  const hasFetched = useRef(false);
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      try {
+          const currentAccount = JSON.parse(localStorage.getItem("userAccounts"))[0];
+          
+          const network = selectedNetwork.name.toLowerCase();
+          const address = currentAccount.publicAddress;
+          
+          const balanceBigNumber = await getBalance(network, address);
+          
+          console.log(`Balance in Wei (BigNumber): ${balanceBigNumber}`);
+          console.log(`Balance in Hex: ${balanceBigNumber._hex}`);
+          
+          const etherBalance = ethers.utils.formatEther(balanceBigNumber);
+          
+          console.log(`Balance in Ether: ${etherBalance}`);
+          
+          setBalance(parseFloat(etherBalance));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchBalance();
+  }, [selectedNetwork]);
+  
+
+
+  
 
   // Toggle the dropdown
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
-  // Handle token selection
-  const selectToken = (token) => {
-    setSelectedToken(token);
+  // Handle network selection and fetch balance
+  const selectNetwork = (network) => {
+    setSelectedNetwork(network);
     setIsDropdownOpen(false);
   };
+
+  const dollarEquivalent = (balance * ethPrice).toFixed(2)
 
   return (
     <div className="flex flex-col items-center text-center mt-2 space-y-5">
       {/* Balance Row */}
       <div className="space-y-3 mb-6">
         <h1 className="text-white text-xl">Available Balance</h1>
-        <p className="text-primary-400">$1,500</p>
-        <div className="relative ">
+        <p className="text-primary-400">{balance.toFixed(4)} {selectedNetwork.name === "Ethereum" ? "ETH" : "SepoliaETH"}</p>
+        <div className="relative">
           <button
             onClick={toggleDropdown}
             className="flex items-center justify-center space-x-4 rounded-full bg-purple-400 text-white w-40 py-1"
           >
-            <FaRegCircleDot className="mr-2" style={{ color: selectedToken.color }} />
-            <span>{selectedToken.name}</span>
+            <FaRegCircleDot className="mr-2" style={{ color: selectedNetwork.color }} />
+            <span>{selectedNetwork.name}</span>
             <IoIosArrowDown className="ml-2" />
           </button>
-          
-          {/* Dropdown Menu */}
+
           {isDropdownOpen && (
             <ul className="absolute left-0 mt-2 w-40 bg-white text-black rounded-md shadow-lg z-10">
-              {tokens.map((token, index) => (
+              {networks.map((network, index) => (
                 <li
                   key={index}
-                  onClick={() => selectToken(token)}
+                  onClick={() => selectNetwork(network)}
                   className="flex items-center px-4 py-2 cursor-pointer hover:bg-gray-200"
                 >
-                  <FaRegCircleDot className="mr-2" style={{ color: token.color }} />
-                  <span>{token.name}</span>
+                  <FaRegCircleDot className="mr-2" style={{ color: network.color }} />
+                  <span>{network.name}</span>
                 </li>
               ))}
             </ul>
@@ -114,7 +180,6 @@ const Home = () => {
         <div className="flex px-4">
           <h2 className="text-primary-400">Tokens</h2>
         </div>
-
         <div className="bg-[#373073] w-[350px] h-screen rounded-2xl">
           <div className="flex items-center justify-between px-4">
             <div className="flex items-center py-2 gap-2">
@@ -128,8 +193,8 @@ const Home = () => {
             </div>
             <div>
               <div className="flex flex-col items-start">
-                <h1 className="text-primary-400 font-semibold">0 ETH</h1>
-                <p className="text-primary-400">$0.00</p>
+                <h1 className="text-primary-400 font-semibold">{balance.toFixed(4)} ETH</h1>
+                <p className="text-primary-400">${dollarEquivalent}</p>
               </div>
             </div>
           </div>

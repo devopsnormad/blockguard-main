@@ -1,33 +1,45 @@
-import React, { useState } from 'react';
-import { GoCopy } from 'react-icons/go';
-import { IoEyeOffOutline, IoEyeOutline } from 'react-icons/io5';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { GoCopy } from "react-icons/go";
+import { IoEyeOffOutline, IoEyeOutline } from "react-icons/io5";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const SecretRecovery = () => {
+  // State to toggle the visibility of the phrases
   const [showPhrase, setShowPhrase] = useState(false);
-  const [copySuccess, setCopySuccess] = useState('');
+  const [copySuccess, setCopySuccess] = useState(""); 
+
   const navigate = useNavigate();
+  const location = useLocation();
+ 
 
-  // Example seed phrases
-  const seedPhrases = [
-    'goat', 'flood', 'ramp', 'think', 'jump',
-    'stream', 'mother', 'anchor', 'demand',
-    'fuse', 'flash', 'block'
-  ];
+  const mnemonic = location.state?.mnemonic;
 
-  const handleSecretGuess = () => {
-    navigate('/recovery-guess');
+  // // Destructure location state to get passphrase and hashedPassword
+  // const { passphrase, hashedPassword } = location.state || {};
+
+  // // Handle undefined passphrase case by setting a fallback
+  const seedPhrases = mnemonic ? mnemonic.split(" ") : [];
+
+  // Function to copy seed phrases to clipboard
+  const handleCopy = () => {
+    if (mnemonic) {
+      navigator.clipboard
+        .writeText(mnemonic)
+        .then(() => {
+          setCopySuccess("Copied!");
+          setTimeout(() => setCopySuccess(""), 2000); // Reset success message after 2 seconds
+        })
+        .catch((err) => {
+          console.error("Failed to copy: ", err);
+        });
+    }
   };
 
-  // Function to copy seed phrases to the clipboard
-  const handleCopyToClipboard = () => {
-    const phrases = seedPhrases.join(' ');
-    navigator.clipboard.writeText(phrases)
-      .then(() => {
-        setCopySuccess('Copied!');
-        setTimeout(() => setCopySuccess(''), 2000); // Clear after 2 seconds
-      })
-      .catch(() => setCopySuccess('Failed to copy!'));
+  const handleSecretGuess = () => {
+    navigate("/recovery-guess", {
+      state: { mnemonic: mnemonic }
+    });
+
   };
 
   return (
@@ -47,12 +59,14 @@ const SecretRecovery = () => {
         {/* Hidden and visible phrases */}
         <div className="flex flex-wrap justify-between gap-2 mb-4">
           {seedPhrases.map((phrase, index) => (
-            <input
+            <span
               key={index}
-              type={showPhrase ? "text" : "password"}
-              className="rounded-lg w-[30%] text-center placeholder-black"
-              placeholder={showPhrase ? phrase : "****"}
-            />
+              className={`rounded-lg w-[30%] text-center text-white bg-black py-2 ${
+                showPhrase ? "bg-opacity-50" : "bg-opacity-10"
+              }`}
+            >
+              {showPhrase ? phrase : "****"}
+            </span>
           ))}
         </div>
       </div>
@@ -73,15 +87,15 @@ const SecretRecovery = () => {
         </div>
         <div
           className="text-pink-500 text-sm flex items-center space-x-1 cursor-pointer"
-          onClick={handleCopyToClipboard}
+          onClick={handleCopy}
         >
-          <GoCopy />
+          <GoCopy className="text-xl" />
           <span>Copy to clipboard</span>
+          {copySuccess && (
+            <span className="text-green-500 ml-2">{copySuccess}</span>
+          )}
         </div>
       </div>
-      {copySuccess && (
-        <div className="text-green-500 text-sm mb-2">{copySuccess}</div>
-      )}
       <button
         className="mt-2 text-white rounded-full py-2 w-[250px] bg-gradient-to-r from-primary-50 to-primary-100 hover:bg-opacity-75"
         onClick={handleSecretGuess}

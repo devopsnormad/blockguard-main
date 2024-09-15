@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { IoNotifications } from "react-icons/io5";
-import { AiFillStepBackward } from "react-icons/ai";
+import { IoIosArrowBack } from "react-icons/io";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Header = ({ isLightMode, toggleTheme }) => {
@@ -52,7 +52,7 @@ const Header = ({ isLightMode, toggleTheme }) => {
         <div className="flex bg-primary-200 p-1 rounded-xl flex-grow-0">
           {/* Navigate one step back in the history */}
           <button onClick={() => navigate(-1)} className="text-primary-400">
-            <AiFillStepBackward className="text-xl font-bold" />
+            <IoIosArrowBack className="text-xl font-bold" />
           </button>
         </div>
       )}

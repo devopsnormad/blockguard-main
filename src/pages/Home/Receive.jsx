@@ -2,9 +2,11 @@ import React, { useState, useEffect } from "react";
 import QRCode from "qrcode";
 import { IoShareOutline } from "react-icons/io5";
 import { FaWhatsapp, FaTelegramPlane } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 const Receive = () => {
-  const publicAddress = "0x5B38Da6a7cB875f56beddC4";
+  const currentAccount = JSON.parse(localStorage.getItem("userAccounts"))[0];
+  const publicAddress = currentAccount.publicAddress;
   const [isCopied, setIsCopied] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [qrCodeURL, setQrCodeURL] = useState("");
@@ -25,10 +27,12 @@ const Receive = () => {
       .writeText(publicAddress)
       .then(() => {
         setIsCopied(true);
+        toast.success("Address copied successfully")
         setTimeout(() => setIsCopied(false), 3000);
       })
       .catch((err) => {
         console.error("Failed to copy:", err);
+        toast.error("Unable to copy address")
       });
   };
 

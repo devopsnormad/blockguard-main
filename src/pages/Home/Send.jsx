@@ -1,45 +1,69 @@
 import React, { useState, useEffect } from "react";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import { AiOutlineQrcode } from "react-icons/ai";
-import blockies from "ethereum-blockies";
+import blockies, { render } from "ethereum-blockies";
 import jsQR from "jsqr";
+import { sendTransaction } from "../../utils/walletUtils";
+import { ethers } from "ethers";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
+import { RotatingLines } from 'react-loader-spinner'
 
-// Simulate fetching multiple user accounts for demonstration purposes
-const fetchUserAccounts = async () => {
-  return [
-    {
-      name: "Account 1",
-      publicAddress: "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4",
-    },
-    {
-      name: "Account 2",
-      publicAddress: "0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2",
-    },
-  ];
-};
 
 const Send = () => {
+  const [loading, setLoading] = useState(false);
   const [inputAddress, setInputAddress] = useState("");
+  const [ inputAmount, setInputAmount ] = useState("");
   const [file, setFile] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
-    const getUserAccounts = async () => {
-      const data = await fetchUserAccounts();
-      // Generate Blockies avatar for each account dynamically
-      const updatedAccounts = data.map((account) => ({
-        ...account,
-        profilePicUrl: blockies
-          .create({ seed: account.publicAddress })
-          .toDataURL(),
-      }));
-      setAccounts(updatedAccounts);
-      setSelectedAccount(updatedAccounts[0]);
+    const getUserAccounts = () => {
+      const savedAccounts = localStorage.getItem('userAccounts');
+      if (savedAccounts) {
+        const accountsData = JSON.parse(savedAccounts);
+        // Generate Blockies avatar for each account dynamically
+        const updatedAccounts = accountsData.map((account) => ({
+          ...account,
+          profilePicUrl: account.profilePicUrl,
+        }));
+        setAccounts(updatedAccounts);
+        setSelectedAccount(updatedAccounts[0]);
+      }
     };
     getUserAccounts();
   }, []);
+
+  const handleSend = async () => {
+
+    setLoading(true);
+
+    try {
+      // const txData = {
+      //   to: inputAddress,
+      //   value: ethers.utils.parseEther('0.1'), // Example amount
+      //   gasLimit: 21000,
+      // };
+      
+      const send = await sendTransaction(inputAmount, inputAddress);
+
+      if(send){
+        toast.success("Transaction sent successfully")
+        navigate("/send-receive")
+      }else{
+        toast.error("An error occcurred")
+      }
+      console.log("Transaction sent successfully");
+    } catch (error) {
+      console.log("Error sending Transaction", error);
+    } finally {
+      setLoading(false); // Enable the button after the process is done
+    }
+  };
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -146,8 +170,22 @@ const Send = () => {
         )}
       </div>
 
+      {/* Row Amount Section */}
+      <div className="space-y-1 w-72">
+        <h1 className="text-primary-400 text-start ml-6">Amount</h1>
+        <div className="relative flex items-center">
+          <input
+            type="number"
+            value={inputAmount}
+            onChange={(e) => setInputAmount(e.target.value)}
+            className="border-2 border-gray-300 bg-transparent rounded-full text-primary-400 text-sm p-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Input amount"
+          />
+        </div>
+      </div>
+
       {/* Row To Account Section */}
-      <div className="space-y-2 w-72">
+      <div className="space-y-1 w-72">
         <h1 className="text-primary-400 text-start ml-6">To</h1>
         <div className="relative flex items-center">
           <input
@@ -174,7 +212,7 @@ const Send = () => {
       </div>
 
       {/* Row Accounts Section */}
-      <div className="w-72 space-y-2">
+      {/* <div className="w-72 space-y-2">
         <h1 className="text-primary-400 text-start ml-2 border-b-2 border-b-primary-600 border-spacing-8">
           Your Accounts ({accounts.length})
         </h1>
@@ -195,15 +233,33 @@ const Send = () => {
             </div>
           </div>
         ))}
-      </div>
+      </div> */}
+
+      {loading && (
+        <RotatingLines
+          visible={true}
+          height="50"
+          width="50"
+          color="#8b06e9"
+          strokeWidth="5"
+          animationDuration="0.75"
+          ariaLabel="rotating-lines-loading"
+          wrapperStyle={{}}
+          wrapperClass=""
+        />
+      )}
 
       {/* Row Send and Cancel Button Section */}
       <div className="space-x-6 space-y-9">
         <button className="w-32 border-2 border-primary-300 rounded-full p-1 text-primary-400 hover:bg-slate-200 hover:text-primary-50">
           Cancel
         </button>
-        <button className="w-32 bg-gradient-to-r from-primary-50 via-primary-200 to-primary-300 rounded-full p-1 text-primary-400 hover:opacity-70">
-          Continue
+        <button
+          className="w-32 bg-gradient-to-r from-primary-50 via-primary-200 to-primary-300 rounded-full p-1 text-primary-400 hover:opacity-70"
+          onClick={handleSend}
+          disabled={loading}
+        >
+          {loading ? 'Processing...' : 'Send'}
         </button>
       </div>
     </div>

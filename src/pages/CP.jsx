@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
-import { useNavigate, useLocation } from "react-router-dom";
-import blockies from "ethereum-blockies";
-import { generateMnemonic, createHdWallet } from "../utils/walletUtils";
+import { useNavigate } from "react-router-dom";
 
 const CreatePassword = () => {
   const [password, setPassword] = useState(""); 
@@ -11,7 +9,6 @@ const CreatePassword = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  
   const navigate = useNavigate();
 
   // Handle checkbox
@@ -24,14 +21,12 @@ const CreatePassword = () => {
   const toggleConfirmPasswordVisibility = () =>
     setShowConfirmPassword(!showConfirmPassword);
 
-
-  // const handleSubmit = () =>{
-  //   navigate("/secret-recovery")
-  // }
   
   const handleSubmit = async (e) => {
     e.preventDefault();
   
+   
+    console.log("Create a new wallet button clicked");
   
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match");
@@ -44,32 +39,34 @@ const CreatePassword = () => {
     }
   
     try {
-      const HdWallet = createHdWallet();
-      const Mnemonic= HdWallet.mnemonic.phrase;
-      const address = HdWallet.address;
-      const PrivateKey = HdWallet.privateKey;
-      const publicKey= HdWallet.publicKey;
-
-      //Save to local Storage
-      localStorage.setItem('mnemonic', Mnemonic);
-      localStorage.setItem("address", address)
-      localStorage.setItem("privateKey", PrivateKey)
-      localStorage.setItem("PublicKey", publicKey)
-
-      // Example account data
-      let accounts = [
-        { name: "Account 1", publicAddress: address, profilePicUrl: blockies.create({ seed: address }).toDataURL() }
-      ];
-      
-      localStorage.setItem('userAccounts', JSON.stringify(accounts));
-
-      
-      
-      navigate("/secret-recovery", {
-        state: { mnemonic: Mnemonic }
-      });
+      const response = await fetch(
+        "https://block-guard-wallet.onrender.com/wallets/create-new-wallet",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "*/*",
+          },
+          body: JSON.stringify({
+            password,
+          }),
+        }
+      );
+  
+      const result = await response.json();
+      console.log("API Result:", result); 
+  
+      if (response.ok) {
+        const passphrase = result.wallet.passPhrase;
+        console.log("Passphrase:", passphrase); 
+        navigate("/secret-recovery", {
+          state: { passphrase },
+        });
+      } else {
+        setErrorMessage("Error creating wallet. Try again.");
+      }
     } catch (err) {
-      console.error("Error creating new wallet", err);
+      console.error("Error:", err);
       setErrorMessage("An error occurred. Please try again.");
     }
   };
