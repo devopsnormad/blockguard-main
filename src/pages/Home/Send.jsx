@@ -51,17 +51,19 @@ const Send = () => {
       
       const send = await sendTransaction(inputAmount, inputAddress);
 
-      if(send){
+      console.log(send)
+
+      if(send.status){
         toast.success("Transaction sent successfully")
         navigate("/send-receive")
       }else{
-        toast.error("An error occcurred")
+        toast.error(send.message)
       }
       console.log("Transaction sent successfully");
     } catch (error) {
       console.log("Error sending Transaction", error);
     } finally {
-      setLoading(false); // Enable the button after the process is done
+      setLoading(false);
     }
   };
 
