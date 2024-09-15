@@ -35,6 +35,8 @@ export function createHdWalletChild() {
         localStorage.setItem("childWallets", JSON.stringify(childWallets));
     }
 
+    console.log(localStorage.getItem("childWallets"));
+
     return true;
 }
 
