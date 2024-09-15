@@ -95,7 +95,7 @@ export async function signTX2(data) {
 
     return txHash;
 }
-// Send Page
+
 // Sends a transaction to a specific address on the Sepolia testnet
 export async function sendTransaction(amount, receiver) {
     const privateKey = localStorage.getItem("privateKey");
@@ -103,21 +103,19 @@ export async function sendTransaction(amount, receiver) {
     const provider = new ethers.providers.JsonRpcProvider("https://sepolia.infura.io/v3/2fa89a3017a64226a09f8d4ad65aaf83"); // Replace with your Infura Project ID
     const wallet = new ethers.Wallet(privateKey, provider);
 
-    // Create transaction object
     const tx = {
-        to: receiver, // Replace with recipient address
-        value: ethers.utils.parseEther(amount), // Amount to send
-        gasLimit: 21000, // Gas limit for a simple transfer
-        gasPrice: await provider.getGasPrice(), // Gas price
-        nonce: await provider.getTransactionCount(wallet.address), // Nonce
-        chainId: 11155111 // Sepolia testnet chain ID
+        to: receiver,
+        value: ethers.utils.parseEther(amount),
+        gasLimit: 21000,
+        gasPrice: await provider.getGasPrice(),
+        nonce: await provider.getTransactionCount(wallet.address),
+        chainId: 11155111
     };
 
     try {
-        // Send the transaction
         const txResponse = await wallet.sendTransaction(tx);
         console.log("Transaction sent:", txResponse);
-        // Wait for the transaction to be mined
+        
         const receipt = await txResponse.wait();
         console.log("Transaction mined:", receipt);
 
@@ -174,15 +172,3 @@ export async function sendTX2(data) {
         console.error("Error sending transaction:", error);
     }
 }
-    
-/*
-// Transaction data
-const txData = {
-    to: "0xc53c03Dff744805f22A607AC05b1e14058a4ee1D", // Recipient address
-    value: ethers.utils.parseEther("0.01"), // Amount to send in Ether
-    chainId: 11155111 // Sepolia testnet chain ID
-};
-
-// Call the sendTX function
-sendTX(txData).catch((error) => console.error("Error:", error));
-*/
