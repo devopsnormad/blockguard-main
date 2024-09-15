@@ -144,7 +144,7 @@ const CreatePassword = () => {
           </p>
         </div>
         <button
-          className="bg-gradient-to-r from-primary-50 via-primary-200 to-primary-300 text-primary-400 w-[200px] py-2 rounded-full"
+          className="bg-[#50C878] text-primary-400 w-[200px] py-2 rounded-full"
           onClick={handleSubmit}
         
         >
