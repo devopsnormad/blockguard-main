@@ -100,7 +100,8 @@ export async function signTX2(data) {
 export async function sendTransaction(amount, receiver) {
     const privateKey = localStorage.getItem("privateKey");
     console.log(privateKey)
-    const provider = new ethers.providers.JsonRpcProvider("https://sepolia.infura.io/v3/2fa89a3017a64226a09f8d4ad65aaf83"); // Replace with your Infura Project ID
+    const provider = new ethers.providers.JsonRpcProvider("https://sepolia.infura.io/v3/2fa89a3017a64226a09f8d4ad65aaf83");
+    const network = await provider.getNetwork();
     const wallet = new ethers.Wallet(privateKey, provider);
 
     const tx = {
@@ -109,22 +110,45 @@ export async function sendTransaction(amount, receiver) {
         gasLimit: 21000,
         gasPrice: await provider.getGasPrice(),
         nonce: await provider.getTransactionCount(wallet.address),
-        chainId: 11155111
+        chainId: network.chainId
     };
 
     try {
         const txResponse = await wallet.sendTransaction(tx);
         console.log("Transaction sent:", txResponse);
-        
+
         const receipt = await txResponse.wait();
         console.log("Transaction mined:", receipt);
 
-        return true;
+        return {status: true, message: "Transaction successful", transactionResponse: txResponse, transactionReceipt: receipt};
     } catch (error) {
         console.error("Error sending transaction:", error);
-    }
 
-    return false;
+        let errorMessage = "An error occurred";
+
+        switch (error.code) {
+            case 'INSUFFICIENT_FUNDS':
+                errorMessage = "Insufficient funds to complete the transaction.";
+                break;
+            case 'NETWORK_ERROR':
+                errorMessage = "Network error. Please check your connection.";
+                break;
+            case 'ACTION_REJECTED':
+                errorMessage = "Transaction was rejected.";
+                break;
+            case 'CALL_EXCEPTION':
+                errorMessage = "Error calling the contract.";
+                break;
+            case 'UNPREDICTABLE_GAS_LIMIT':
+                errorMessage = "Unable to estimate gas limit.";
+                break;
+            default:
+                errorMessage = error.message || errorMessage;
+                break;
+        }
+
+        return {status: false, message: errorMessage};
+    }
 }
 
 // Sends a signed transaction to the Sepolia testnet
