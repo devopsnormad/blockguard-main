@@ -4,6 +4,7 @@ import {ethers} from 'ethers';
 // Generates a new 12-word mnemonic phrase from 16 random bytes of entropy
 export function generateMnemonic() {
     let randomEntropyBytes = ethers.utils.randomBytes(16);
+    
     return ethers.utils.entropyToMnemonic(randomEntropyBytes);
 }
 // Function goes to the Create-Page
@@ -15,8 +16,6 @@ export function createHdWallet() {
     return HdWallet;
 }
 
-const HdWallet = createHdWallet();
-
 // Function goes to the Create-Page
 // Creates child wallets derived from the HD wallet and stores them in local storage
 export function createHdWalletChild() {
@@ -27,7 +26,6 @@ export function createHdWalletChild() {
         let totalChild = childWallets.length;
         let newpath = "m/0/" + (totalChild + 1);
 
-        // Derives a new child wallet at the next path in the hierarchy and adds to the list
         childWallets.push(HdWallet.derivePath(newpath));
         localStorage.setItem("childWallets", JSON.stringify(childWallets));
 
@@ -36,8 +34,6 @@ export function createHdWalletChild() {
         childWallets.push(HdWallet.derivePath(HdWallet.path + "/0/1"));
         localStorage.setItem("childWallets", JSON.stringify(childWallets));
     }
-
-    console.log(localStorage.getItem("childWallets"));
 
     return true;
 }
